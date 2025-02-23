@@ -1,6 +1,6 @@
 services:
   yt-sonos-bridge:
-    image: 'yt-sonos-bridge:latest'
+    image: ghcr.io/tetrisblack/yt-sonos-bridge:main
     environment:
       SONOS_DEVICE_IP: '192.168.2.33'
       SERVER_ENDPOINT: http://192.168.2.5:3000
