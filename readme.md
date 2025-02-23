@@ -25,7 +25,7 @@ This application is deployed using Docker Compose, which handles all dependencie
 1. Clone the repository:
 
 ```bash
-git clone [repository-url]
+git clone https://github.com/TetrisBlack/yt-sonos-bridge.git
 cd sonos-bullshit-bridge
 ```
 
