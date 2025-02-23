@@ -1,0 +1,13 @@
+services:
+  yt-sonos-bridge:
+    image: 'yt-sonos-bridge:latest'
+    environment:
+      SONOS_DEVICE_IP: '192.168.2.33'
+      SERVER_ENDPOINT: http://192.168.2.5:3000
+      LOG_LEVEL: info
+      YT_PLAYER_BRAND: Coffee drunk solutions
+      YT_PLAYER_NAME: Don't be a bitch sonos!
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    network_mode: 'host'

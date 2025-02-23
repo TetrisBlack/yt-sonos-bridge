@@ -1,0 +1,21 @@
+{
+    "include": [
+        "src/**/*.ts"
+    ],
+    "compilerOptions": {
+        "module": "esnext",
+        "target": "esnext",
+        "declaration": true,
+        "declarationMap": true,
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "inlineSources": true,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "typeRoots": [
+            "src/typings",
+            "node_modules/@types"
+        ]
+    }
+}
