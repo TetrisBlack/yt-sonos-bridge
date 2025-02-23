@@ -10,7 +10,7 @@ import SonosPlayer from './SonosPlayer'
 import { SonosDevice } from '@svrooij/sonos/lib'
 import './mp4-to-mp3-server'
 
-const playerName = process.env.PLAYER_NAME || "Don't be a bitch sonos!"
+const playerName = process.env.PLAYER_NAME || 'Youtube Sonos Bridge'
 const playerBrand = process.env.PLAYER_BRAND || 'Not a real device'
 const logLevelString = process.env.LOG_LEVEL || 'info'
 const sonosDeviceIp = process.env.SONOS_DEVICE_IP

@@ -20,26 +20,7 @@ A Node.js bridge that enables YouTube video casting to Sonos devices. This proje
 
 ## Installation
 
-Docker is the recommended way to deploy this application as it handles all dependencies and provides the most reliable setup.
-
-### Docker Installation (Recommended)
-
-1. Clone the repository and navigate to the docker directory:
-
-```bash
-git clone [repository-url]
-cd sonos-bullshit-bridge
-```
-
-2. Build and run using Docker Compose:
-
-```bash
-docker compose -f docker/compose.yml up -d
-```
-
-### Manual Installation
-
-Only use this method if you cannot use Docker for some reason.
+This application is deployed using Docker Compose, which handles all dependencies and provides the most reliable setup.
 
 1. Clone the repository:
 
@@ -48,52 +29,28 @@ git clone [repository-url]
 cd sonos-bullshit-bridge
 ```
 
-2. Install dependencies:
+2. Configure and run using Docker Compose:
 
-```bash
-npm install
+The configuration is defined in [docker/compose.yml](docker/compose.yml). Adjust the environment variables in this file according to your setup:
+
+```yaml
+environment:
+    SONOS_DEVICE_IP: '192.168.2.33' # Your Sonos device IP
+    SERVER_ENDPOINT: http://192.168.2.5:3000 # Your server endpoint (the ip of the server where this sofware is running)
+    LOG_LEVEL: info
+    YT_PLAYER_BRAND: Coffee drunk solutions
+    YT_PLAYER_NAME: Don't be a bitch sonos!
 ```
 
-## Configuration
-
-The bridge can be configured using environment variables:
-
-| Variable        | Description                              | Default                 |
-| --------------- | ---------------------------------------- | ----------------------- |
-| SONOS_DEVICE_IP | IP address of your Sonos device          | Required                |
-| SERVER_ENDPOINT | Server endpoint for Docker deployment    | Required                |
-| LOG_LEVEL       | Logging level (debug, info, warn, error) | info                    |
-| YT_PLAYER_BRAND | Custom brand name for the device         | Coffee drunk solutions  |
-| YT_PLAYER_NAME  | Custom name for the device               | Don't be a bitch sonos! |
-
-Create a `.env` file in the root directory with your configuration.
-
-## Usage
-
-### Running with Docker (Recommended)
+Then start the service:
 
 ```bash
 docker compose -f docker/compose.yml up -d
 ```
 
-The bridge will appear in your YouTube casting devices list with your configured custom name.
+## Usage
 
-### Running Locally (Development Only)
-
-Only use this method for development purposes:
-
-Development mode with auto-reload:
-
-```bash
-npm run dev
-```
-
-Production mode:
-
-```bash
-npm run build
-npm run prod
-```
+After starting the container, the bridge will appear in your YouTube casting devices list with your configured custom name. The configuration can be adjusted through environment variables in the Docker Compose file.
 
 ## Development
 

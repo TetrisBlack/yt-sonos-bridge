@@ -6,7 +6,7 @@ services:
       SERVER_ENDPOINT: http://192.168.2.5:3000
       LOG_LEVEL: info
       YT_PLAYER_BRAND: Coffee drunk solutions
-      YT_PLAYER_NAME: Don't be a bitch sonos!
+      YT_PLAYER_NAME: Youtube Sonos Bridge!
     build:
       context: ../
       dockerfile: ./docker/Dockerfile
