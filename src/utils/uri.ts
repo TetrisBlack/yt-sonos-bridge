@@ -1,3 +1,7 @@
 export function getIdFromUrl(url: string): string {
-    return url.split('/').pop()?.replace('.mp3', '') ?? ''
+    try {
+        return url.split('/').pop()?.replace('.mp3', '') ?? ''
+    } catch (err) {
+        return ''
+    }
 }
