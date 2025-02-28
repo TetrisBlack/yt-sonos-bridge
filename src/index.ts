@@ -76,7 +76,11 @@ class SonosPlayerReceiver {
 
             // clean up running tracks on sonos device
             if (totalConnectedSenders === 1) {
-                sonosDevice.AVTransportService.RemoveAllTracksFromQueue()
+                try {
+                    sonosDevice.AVTransportService.RemoveAllTracksFromQueue()
+                } catch (e) {
+                    console.error('Sonos reports an error!', e)
+                }
             }
 
             this.#logger.info(log)
