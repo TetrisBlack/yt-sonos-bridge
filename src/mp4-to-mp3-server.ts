@@ -10,6 +10,17 @@ import crypto from 'crypto'
 import ytdl from '@distube/ytdl-core'
 import sharp from 'sharp'
 
+let ytdlAgent: ytdl.Agent
+const configPath = process.env.YTDL_AGENT_CONFIG_PATH
+
+if (configPath && fs.existsSync(configPath)) {
+    console.log('Creating a YT Agent with Cookie!')
+    // @ts-ignore
+    ytdlAgent = ytdl.createAgent(JSON.parse(fs.readFileSync(configPath)))
+} else {
+    ytdlAgent = ytdl.createAgent()
+}
+
 // Validate if a string is base64 encoded
 function isBase64(str: string): boolean {
     try {
@@ -73,7 +84,7 @@ app.get('/convert', async (c) => {
             if (videoId) {
                 videoStream = ytdl(videoId, {
                     quality: 'highestaudio',
-                    filter: 'audioonly',
+                    agent: ytdlAgent,
                 })
             } else {
                 const url = Buffer.from(encodedUrl!, 'base64').toString()
@@ -204,7 +215,7 @@ app.get('/stream', async (c) => {
         const filename = `${videoId}.mp3`
 
         // Get video info first to calculate content length
-        const info = await ytdl.getInfo(videoId)
+        const info = await ytdl.getInfo(videoId, { agent: ytdlAgent })
         const lengthSeconds = parseInt(info.videoDetails.lengthSeconds)
         // Calculate content length: bitrate * duration in seconds
         // 192kbps = 24KB/s, add 8KB/s overhead for mp3 headers etc.
@@ -212,7 +223,7 @@ app.get('/stream', async (c) => {
 
         const videoStream = ytdl(videoId, {
             quality: 'highestaudio',
-            filter: 'audioonly',
+            agent: ytdlAgent,
         })
 
         // Set up the ffmpeg command

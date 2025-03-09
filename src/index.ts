@@ -89,10 +89,8 @@ class SonosPlayerReceiver {
             const log = `Disconnected from ${sender.name} (${sender.client?.name}${
                 implicit ? ' - implicit' : ''
             }). Remaining connected senders: ${receiver.getConnectedSenders().length}`
-            if (screen) {
-            } else {
-                this.#logger.info(log)
-            }
+
+            this.#logger.info(log)
         })
         receiver.on('error', (error: any) => {
             this.#logger.error('[SonosPlayer] Error occurred:', error)

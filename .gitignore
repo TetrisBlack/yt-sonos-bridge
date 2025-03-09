@@ -4,3 +4,4 @@ node_modules
 temp
 .env
 *-base.js
+cookie.json
