@@ -17,7 +17,7 @@
     "license": "Apache-2.0",
     "description": "",
     "dependencies": {
-        "@distube/ytdl-core": "^4.15.9",
+        "@distube/ytdl-core": "^4.16.5",
         "@hono/node-server": "^1.13.8",
         "@svrooij/sonos": "^2.6.0-beta.11",
         "fluent-ffmpeg": "^2.1.3",
