@@ -83,7 +83,7 @@ app.get('/convert', async (c) => {
 
             if (videoId) {
                 videoStream = ytdl(videoId, {
-                    //quality: 'highestaudio',
+                    quality: 'highestaudio',
                     agent: ytdlAgent,
                 })
             } else {
