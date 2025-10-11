@@ -17,7 +17,7 @@
     "license": "Apache-2.0",
     "description": "",
     "dependencies": {
-        "@distube/ytdl-core": "^4.16.12",
+        "@distube/ytdl-core": "git://github.com/ToddyTheNoobDud/ytdl-core-stuff.git",
         "@hono/node-server": "^1.13.8",
         "@svrooij/sonos": "^2.6.0-beta.11",
         "fluent-ffmpeg": "^2.1.3",
