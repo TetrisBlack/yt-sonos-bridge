@@ -69,6 +69,7 @@ const app = new Hono()
 app.get('/convert', async (c) => {
     const encodedUrl = c.req.query('url')
     const videoId = c.req.query('videoId')
+    const noWait = c.req.query('noWait') === 'true'
 
     if (!encodedUrl && !videoId) {
         return c.json({ error: 'Missing url or videoId parameter' }, 400)
@@ -90,8 +91,14 @@ app.get('/convert', async (c) => {
         return c.json({ url: fileUrl, status: 'ready' })
     }
 
-    // Wait for existing conversion if in progress
+    // Wait for existing conversion if in progress (unless noWait is set)
     if (conversionStatus.has(filename)) {
+        if (noWait) {
+            const host = c.req.header('host') || 'localhost:3000'
+            const protocol = c.req.header('x-forwarded-proto') || 'http'
+            const fileUrl = `${protocol}://${host}/audio/${filename}`
+            return c.json({ url: fileUrl, status: 'converting' })
+        }
         await conversionStatus.get(filename)
         const host = c.req.header('host') || 'localhost:3000'
         const protocol = c.req.header('x-forwarded-proto') || 'http'
@@ -196,12 +203,23 @@ app.get('/convert', async (c) => {
         console.error(`Conversion failed for ${filename}`)
     })
 
-    // Return the URL immediately
     const host = c.req.header('host') || 'localhost:3000'
     const protocol = c.req.header('x-forwarded-proto') || 'http'
     const fileUrl = `${protocol}://${host}/audio/${filename}`
 
-    return c.json({ url: fileUrl, status: 'converting' })
+    // Return immediately if noWait is set
+    if (noWait) {
+        return c.json({ url: fileUrl, status: 'converting' })
+    }
+
+    // Wait for conversion to complete
+    try {
+        await conversionPromise
+    } catch (error) {
+        return c.json({ error: 'Conversion failed' }, 500)
+    }
+
+    return c.json({ url: fileUrl, status: 'ready' })
 })
 
 // Get audio file information
@@ -640,12 +658,11 @@ app.get('/admin', async (c) => {
                     return;
                 }
                 
-                results.innerHTML = 'Converting video...';
+                results.innerHTML = 'Starting conversion...';
                 try {
-                    const response = await fetch('/convert?videoId=' + encodeURIComponent(videoId));
+                    const response = await fetch('/convert?videoId=' + encodeURIComponent(videoId) + '&noWait=true');
                     const data = await response.json();
-                    results.innerHTML = 'Convert result: ' + JSON.stringify(data, null, 2);
-                    setTimeout(() => location.reload(), 2000); // Refresh to show new cache
+                    results.innerHTML = 'Conversion started: ' + JSON.stringify(data, null, 2);
                 } catch (error) {
                     results.innerHTML = 'Convert failed: ' + error.message;
                 }
