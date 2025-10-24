@@ -2,7 +2,7 @@ import { Timer } from 'timer-node'
 import { Player, type PlayerState, PLAYER_STATUSES, type Volume } from 'yt-cast-receiver'
 import type Video from 'yt-cast-receiver/dist/mjs/lib/app/Video'
 import VideoLoader from './VideoLoader'
-import type { SonosDevice } from '@svrooij/sonos/lib'
+import type { SonosDevice } from '@svrooij/sonos'
 import { secondsToTimeString, timeStringToSeconds } from './utils/time'
 import { getIdFromUrl } from './utils/uri'
 import { EventEmitter } from 'events'
@@ -111,7 +111,7 @@ export default class SonosPlayer extends Player {
         // Periodically sync local timer with Sonos playback position
         setInterval(() => {
             this.syncSeek()
-        }, 5000)
+        }, 3000)
 
         // When we receive a `state` event from the super class, signaling a change
         // in player state, we emit our own `fakeState` event for consumption.

@@ -1,4 +1,4 @@
-import { SonosDevice } from '@svrooij/sonos/lib'
+import { SonosDevice } from '@svrooij/sonos'
 
 const sonos = new SonosDevice('')
 sonos.LoadDeviceData()

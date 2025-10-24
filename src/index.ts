@@ -7,7 +7,7 @@ import YouTubeCastReceiver, {
 } from 'yt-cast-receiver'
 import { type PlaylistEvent } from 'yt-cast-receiver'
 import SonosPlayer from './SonosPlayer'
-import { SonosDevice } from '@svrooij/sonos/lib'
+import { SonosDevice } from '@svrooij/sonos'
 import { setSonosPlayer } from './mp4-to-mp3-server'
 
 const playerName = process.env.PLAYER_NAME || 'Youtube Sonos Bridge'
