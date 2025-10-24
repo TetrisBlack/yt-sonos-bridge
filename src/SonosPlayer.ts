@@ -351,12 +351,12 @@ export default class SonosPlayer extends Player {
     /**
      * Converts YouTube video ID to audio URL
      */
-    async #getAudioUrl(videoId: string): Promise<string> {
+    async #getAudioUrl(videoId: string, noWait?: Boolean): Promise<string> {
         interface ConvertJob {
             url: string
             status: string
         }
-        const response = await fetch(`${this.ownIpServerEndpoint}/convert?videoId=${videoId}`)
+        const response = await fetch(`${this.ownIpServerEndpoint}/convert?videoId=${videoId}&noWait=${!!noWait}`)
         const json = (await response.json()) as ConvertJob
         return json.url
     }
@@ -407,7 +407,7 @@ export default class SonosPlayer extends Player {
 
                 if (nextSongId) {
                     this.logger.info(`[sonosPlayer] Preloading Video`, nextSongId)
-                    const newTrackUrl = await this.#getAudioUrl(nextSongId)
+                    const newTrackUrl = await this.#getAudioUrl(nextSongId, true)
                     await this.sonos.AVTransportService.SetNextAVTransportURI({
                         InstanceID: 0,
                         NextURI: newTrackUrl,
@@ -418,7 +418,7 @@ export default class SonosPlayer extends Player {
                 this.logger.info(`[sonosPlayer] Loading next music track in fluide mode!`)
                 if (nextSongId) {
                     this.logger.info(`[sonosPlayer] Preloading Video`, nextSongId)
-                    this.#getAudioUrl(nextSongId).then(async (nextTrackUrl) => {
+                    this.#getAudioUrl(nextSongId, true).then(async (nextTrackUrl) => {
                         await this.sonos.AVTransportService.SetNextAVTransportURI({
                             InstanceID: 0,
                             NextURI: nextTrackUrl,
