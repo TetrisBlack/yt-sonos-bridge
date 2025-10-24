@@ -8,7 +8,7 @@ import YouTubeCastReceiver, {
 import { type PlaylistEvent } from 'yt-cast-receiver'
 import SonosPlayer from './SonosPlayer'
 import { SonosDevice } from '@svrooij/sonos/lib'
-import './mp4-to-mp3-server'
+import { setSonosPlayer } from './mp4-to-mp3-server'
 
 const playerName = process.env.PLAYER_NAME || 'Youtube Sonos Bridge'
 const playerBrand = process.env.PLAYER_BRAND || 'Not a real device'
@@ -34,6 +34,9 @@ class SonosPlayerReceiver {
 
         // Create our own player instance
         const player = (this.#player = new SonosPlayer(sonosDevice, ownIpServerEndpoint as string))
+        
+        // Make the player available to the admin server
+        setSonosPlayer(player)
 
         // Create `YouTubeCastReceiver` instance, specifying our own player implementation.
         const receiver = (this.#receiver = new YouTubeCastReceiver(player, {
