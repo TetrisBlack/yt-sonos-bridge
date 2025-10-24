@@ -1,4 +1,4 @@
-FROM node:22.14-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -6,14 +6,17 @@ ADD . .
 RUN npm ci && npm run build && npm run bundle
 
 
-FROM node:22.14-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache ffmpeg curl python3
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./yt-dlp
-RUN chmod a+rx ./yt-dlp
-RUN npm install sharp
+RUN apk upgrade --no-cache && \
+    apk add --no-cache ffmpeg curl python3 && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./yt-dlp && \
+    chmod a+rx ./yt-dlp && \
+    npm install sharp && \
+    apk del curl
+
 COPY --from=build /app/dist/bundle.mjs /app/bundle.mjs
 
 ENV YTDLP_BIN_PATH=/app/yt-dlp
