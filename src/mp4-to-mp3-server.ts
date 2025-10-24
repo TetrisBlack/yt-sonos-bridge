@@ -82,6 +82,23 @@ app.get('/convert', async (c) => {
     const filenameBase = videoId || crypto.createHash('md5').update(encodedUrl!).digest('hex')
     const filename = `${filenameBase}.mp3`
 
+    // Return URL immediately if file already exists
+    if (audioFiles.has(filename)) {
+        const host = c.req.header('host') || 'localhost:3000'
+        const protocol = c.req.header('x-forwarded-proto') || 'http'
+        const fileUrl = `${protocol}://${host}/audio/${filename}`
+        return c.json({ url: fileUrl, status: 'ready' })
+    }
+
+    // Wait for existing conversion if in progress
+    if (conversionStatus.has(filename)) {
+        await conversionStatus.get(filename)
+        const host = c.req.header('host') || 'localhost:3000'
+        const protocol = c.req.header('x-forwarded-proto') || 'http'
+        const fileUrl = `${protocol}://${host}/audio/${filename}`
+        return c.json({ url: fileUrl, status: 'ready' })
+    }
+
     // Create and store the conversion promise
     const conversionPromise = (async () => {
         const videoStream: Buffer[] = []
