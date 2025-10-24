@@ -84,94 +84,89 @@ app.get('/convert', async (c) => {
 
     // Create and store the conversion promise
     const conversionPromise = (async () => {
-        try {
-            const videoStream: Buffer[] = []
-            const memoryWriteStream = new Writable({
-                write(chunk: Buffer, encoding, callback) {
-                    videoStream.push(chunk)
-                    callback()
+        const videoStream: Buffer[] = []
+        const memoryWriteStream = new Writable({
+            write(chunk: Buffer, encoding, callback) {
+                videoStream.push(chunk)
+                callback()
+            }
+        })
+
+        let readableStream: Readable
+
+        if (videoId) {
+            // Use ytdlp to download and get the stream directly with progress tracking
+            const streamProcess = ytdlp.stream(`https://www.youtube.com/watch?v=${videoId}`, {
+                format: {
+                    filter: 'audioonly'
+                },
+                onProgress: (progress) => {
+                    const percent = progress.percentage || 0
+                    console.log(`Download progress: ${percent}%`)
+                    conversionProgress.set(filename, {
+                        progress: Math.round(percent * 0.8), // 80% for download, 20% for conversion
+                        status: `Downloading... ${progress.downloaded_str || ''} / ${progress.total_str || ''}`
+                    })
                 }
             })
+            conversionProgress.set(filename, { progress: 5, status: 'Starting download...' })
+            await streamProcess.pipeAsync(memoryWriteStream)
+            conversionProgress.set(filename, { progress: 80, status: 'Converting to MP3...' })
 
-            let readableStream: Readable
-            
-            if (videoId) {
-                // Use ytdlp to download and get the stream directly with progress tracking
-                const streamProcess = ytdlp.stream(`https://www.youtube.com/watch?v=${videoId}`, {
-                    format: {
-                        filter: 'audioonly'
-                    },
-                    onProgress: (progress) => {
-                        const percent = progress.percentage || 0
-                        console.log(`Download progress: ${percent}%`)
-                        conversionProgress.set(filename, { 
-                            progress: Math.round(percent * 0.8), // 80% for download, 20% for conversion
-                            status: `Downloading... ${progress.downloaded_str || ''} / ${progress.total_str || ''}` 
-                        })
-                    }
-                })
-                conversionProgress.set(filename, { progress: 5, status: 'Starting download...' })
-                await streamProcess.pipeAsync(memoryWriteStream)
-                conversionProgress.set(filename, { progress: 80, status: 'Converting to MP3...' })
-                
-                // Convert buffer array to readable stream for ffmpeg
-                const buffer = Buffer.concat(videoStream)
-                readableStream = new Readable({
-                    read() {
-                        this.push(buffer)
-                        this.push(null)
-                    }
-                })
-            } else {
-                const url = Buffer.from(encodedUrl!, 'base64').toString()
-                readableStream = await new Promise<Readable>((resolve, reject) => {
-                    const isHttps = url.startsWith('https:')
-                    const client = isHttps ? https : http
-
-                    client
-                        .get(url, (response) => {
-                            if (response.statusCode !== 200) {
-                                reject(new Error(`Failed to fetch video: ${response.statusCode}`))
-                                return
-                            }
-                            resolve(response as Readable)
-                        })
-                        .on('error', reject)
-                })
-            }
-
-            // Convert stream to MP3 using ffmpeg
-            const chunks: Buffer[] = []
-            await new Promise<void>((resolve, reject) => {
-                ffmpeg(readableStream)
-                    .toFormat('mp3')
-                    .audioBitrate(192)
-                    .on('error', (err: Error) => {
-                        console.error('Error during conversion:', err)
-                        reject(err)
-                    })
-                    .on('end', () => {
-                        const finalBuffer = Buffer.concat(chunks)
-                        audioFiles.set(filename, {
-                            buffer: finalBuffer,
-                            timestamp: Date.now(),
-                        })
-                        maintainFileLimit()
-                        resolve()
-                    })
-                    .pipe()
-                    .on('data', (chunk: Buffer) => chunks.push(chunk))
+            // Convert buffer array to readable stream for ffmpeg
+            const buffer = Buffer.concat(videoStream)
+            readableStream = new Readable({
+                read() {
+                    this.push(buffer)
+                    this.push(null)
+                }
             })
-        } catch (error) {
-            console.error('Conversion error:', error)
-            throw error
+        } else {
+            const url = Buffer.from(encodedUrl!, 'base64').toString()
+            readableStream = await new Promise<Readable>((resolve, reject) => {
+                const isHttps = url.startsWith('https:')
+                const client = isHttps ? https : http
+
+                client
+                    .get(url, (response) => {
+                        if (response.statusCode !== 200) {
+                            reject(new Error(`Failed to fetch video: ${response.statusCode}`))
+                            return
+                        }
+                        resolve(response as Readable)
+                    })
+                    .on('error', reject)
+            })
         }
+
+        // Convert stream to MP3 using ffmpeg
+        const chunks: Buffer[] = []
+        await new Promise<void>((resolve, reject) => {
+            ffmpeg(readableStream)
+                .toFormat('mp3')
+                .audioBitrate(192)
+                .on('error', (err: Error) => {
+                    console.error('Error during conversion:', err)
+                    reject(err)
+                })
+                .on('end', () => {
+                    const finalBuffer = Buffer.concat(chunks)
+                    audioFiles.set(filename, {
+                        buffer: finalBuffer,
+                        timestamp: Date.now(),
+                    })
+                    maintainFileLimit()
+                    resolve()
+                })
+                .pipe()
+                .on('data', (chunk: Buffer) => chunks.push(chunk))
+        })
     })()
 
     // Store the conversion promise and handle cleanup on error
     conversionStatus.set(filename, conversionPromise)
     conversionProgress.set(filename, { progress: 0, status: 'Starting conversion...' })
-    
+
     conversionPromise.then(() => {
         conversionStatus.delete(filename)
         conversionProgress.set(filename, { progress: 100, status: 'Completed' })
@@ -500,7 +495,7 @@ app.post('/sonos/previous', async (c) => {
 // Get video info from YouTube
 app.get('/video/:videoId/info', async (c) => {
     const videoId = c.req.param('videoId')
-    
+
     try {
         const info = await ytdlp.getInfoAsync<'video'>(`https://www.youtube.com/watch?v=${videoId}`)
         return c.json({
@@ -525,11 +520,11 @@ app.get('/admin/progress-stream', (c) => {
                 filename,
                 ...progress
             }))
-            
+
             await stream.writeSSE({
                 data: JSON.stringify({ conversions: progressInfo })
             })
-            
+
             await stream.sleep(500)
         }
     })
@@ -567,9 +562,9 @@ app.get('/admin', async (c) => {
             <table>
                 <tr><th></th><th>Filename</th><th>Size (bytes)</th><th>Cached At</th><th>Actions</th></tr>
                 ${cacheInfo.map(file => {
-                    const videoId = file.filename.replace('.mp3', '')
-                    return `<tr><td><img src="/thumbnail/${videoId}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'"></td><td>${file.filename}</td><td>${file.size}</td><td>${file.timestamp}</td><td><button class="test-btn" style="padding: 5px 10px; margin: 0;" onclick="showVideoInfo('${videoId}')">Info</button></td></tr>`
-                }).join('')}
+        const videoId = file.filename.replace('.mp3', '')
+        return `<tr><td><img src="/thumbnail/${videoId}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'"></td><td>${file.filename}</td><td>${file.size}</td><td>${file.timestamp}</td><td><button class="test-btn" style="padding: 5px 10px; margin: 0;" onclick="showVideoInfo('${videoId}')">Info</button></td></tr>`
+    }).join('')}
             </table>
         </div>
         
@@ -578,8 +573,8 @@ app.get('/admin', async (c) => {
             <p>Converting: ${conversionInfo.length}</p>
             <div id="conversions">
                 ${conversionInfo.map(filename => {
-                    const progress = conversionProgress.get(filename) || { progress: 0, status: 'Starting...' }
-                    return `
+        const progress = conversionProgress.get(filename) || { progress: 0, status: 'Starting...' }
+        return `
                         <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                             <div style="font-weight: bold;">${filename}</div>
                             <div style="margin: 5px 0; font-size: 12px; color: #666;">${progress.status}</div>
@@ -589,7 +584,7 @@ app.get('/admin', async (c) => {
                             <div style="text-align: right; font-size: 12px; margin-top: 2px;">${progress.progress}%</div>
                         </div>
                     `
-                }).join('')}
+    }).join('')}
             </div>
         </div>
         
