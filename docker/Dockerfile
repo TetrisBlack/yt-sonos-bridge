@@ -10,7 +10,7 @@ FROM node:22.14-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache ffmpeg curl
+RUN apk add --no-cache ffmpeg curl python3
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./yt-dlp
 RUN chmod a+rx ./yt-dlp
 RUN npm install sharp
