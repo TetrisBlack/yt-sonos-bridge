@@ -7,19 +7,10 @@ import http from 'http'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import ytdl from '@distube/ytdl-core'
+import { YtDlp } from 'ytdlp-nodejs'
 import sharp from 'sharp'
 
-let ytdlAgent: ytdl.Agent
-const configPath = process.env.YTDL_AGENT_CONFIG_PATH
-
-if (configPath && fs.existsSync(configPath)) {
-    console.log('Creating a YT Agent with Cookie!')
-    // @ts-ignore
-    ytdlAgent = ytdl.createAgent(JSON.parse(fs.readFileSync(configPath)))
-} else {
-    ytdlAgent = ytdl.createAgent()
-}
+const ytdlp = new YtDlp()
 
 // Validate if a string is base64 encoded
 function isBase64(str: string): boolean {
@@ -82,10 +73,15 @@ app.get('/convert', async (c) => {
             let videoStream: Readable
 
             if (videoId) {
-                videoStream = ytdl(videoId, {
-                    quality: 'highestaudio',
-                    agent: ytdlAgent,
+                // Use ytdlp to download and get the stream directly
+                const process = ytdlp.download(`https://www.youtube.com/watch?v=${videoId}`, {
+                    format: {
+                        filter: 'audioonly',
+                        quality: 10
+                    },
+                    output: '-'
                 })
+                videoStream = process.stdout as Readable
             } else {
                 const url = Buffer.from(encodedUrl!, 'base64').toString()
                 videoStream = await new Promise<Readable>((resolve, reject) => {
@@ -214,17 +210,20 @@ app.get('/stream', async (c) => {
         // Generate deterministic filename
         const filename = `${videoId}.mp3`
 
-        // Get video info first to calculate content length
-        const info = await ytdl.getInfo(videoId, { agent: ytdlAgent })
-        const lengthSeconds = parseInt(info.videoDetails.lengthSeconds)
-        // Calculate content length: bitrate * duration in seconds
-        // 192kbps = 24KB/s, add 8KB/s overhead for mp3 headers etc.
+        // Get video info for duration calculation
+        const info = await ytdlp.getInfoAsync<'video'>(`https://www.youtube.com/watch?v=${videoId}`)
+        const lengthSeconds = info.duration || 0
         const contentLength = Math.ceil(lengthSeconds * (24 + 8) * 1024)
-
-        const videoStream = ytdl(videoId, {
-            quality: 'highestaudio',
-            agent: ytdlAgent,
+        
+        // Stream audio directly
+        const process = ytdlp.download(`https://www.youtube.com/watch?v=${videoId}`, {
+            format: {
+                filter: 'audioonly',
+                quality: 10
+            },
+            output: '-'
         })
+        const videoStream = process.stdout as Readable
 
         // Set up the ffmpeg command
         const command = ffmpeg(videoStream).toFormat('mp3').audioBitrate(192)
@@ -329,7 +328,7 @@ app.get('/thumbnail/:videoId', async (c) => {
             .toBuffer()
 
         // Return the processed image
-        return new Response(processedImageBuffer, {
+        return new Response(processedImageBuffer, { 
             headers: {
                 'Content-Type': 'image/jpeg',
                 'Cache-Control': 'public, max-age=31536000',
