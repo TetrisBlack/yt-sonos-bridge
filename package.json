@@ -25,7 +25,7 @@
         "sharp": "^0.33.5",
         "typescript": "^5.7.3",
         "yt-cast-receiver": "^2.0.0",
-        "ytdlp-nodejs": "^2.3.5"
+        "ytdlp-nodejs": "^3.4.4"
     },
     "devDependencies": {
         "@types/fluent-ffmpeg": "^2.1.27",
